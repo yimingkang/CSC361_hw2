@@ -26,7 +26,7 @@ class RunnableSocketWriter implements Runnable {
             FileInputStream fin= new FileInputStream(file);
             System.out.println("Writer: Begin transmitting file");
             int total_bytes = 0;
-
+            long start = System.currentTimeMillis();
             while(true){
                 int len = fin.read(buffer);
                 if (len<0){
@@ -38,7 +38,8 @@ class RunnableSocketWriter implements Runnable {
                     total_bytes += len;
                 }
             }
-            System.out.println("Writer: Done transmitting file (" + total_bytes + " bytes)");
+            long diff = System.currentTimeMillis() - start;
+            System.out.println("Writer: Done transmitting file (" + total_bytes + " bytes, took " + diff +"ms)");
             socket.close();
             fin.close();
         }

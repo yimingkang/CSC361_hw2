@@ -25,7 +25,7 @@ public class Server {
             // Read filename
             String fileName= socket_reader.readLine();
             if(fileName == null){
-                System.out.println("Server: Connection lost....");
+                System.out.println("Server: Connection lost, closing control socket");
                 socket.close();
                 continue;
             }
@@ -57,7 +57,7 @@ public class Server {
                 System.out.println("Server: File " + fileName + " not found");
                 writer.writeBytes("ERROR");
             }
-            System.out.println("Server: Closing socket...");
+            System.out.println("Server: Closing control socket"); 
             socket.close();
         }
     }

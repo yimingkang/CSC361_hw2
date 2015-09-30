@@ -31,6 +31,7 @@ class RunnableSocketReader implements Runnable {
             int total_bytes = 0;
             int len;
 			byte[] buffer = new byte[1024];
+            long start = System.currentTimeMillis();
             while(true){
                 len = socket_reader.read(buffer);
                 if(len < 0){
@@ -40,7 +41,9 @@ class RunnableSocketReader implements Runnable {
                 total_bytes += len;
                 fout.write(buffer, 0, len);
             }
-            System.out.println("Reader: Closing socket (" + total_bytes + " bytes)");
+            long diff = System.currentTimeMillis() - start;
+            float rate = total_bytes/diff/1024;
+            System.out.println("Reader: Closing socket (" + total_bytes + " bytes , took " + diff + "ms, " + rate + "MB/s )");
             socket.close();
             fout.close();
         }
