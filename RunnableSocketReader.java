@@ -3,39 +3,44 @@ import java.io.*;
 
 class RunnableSocketReader implements Runnable {
     private Thread thisThread;
-    private Socket socket;
+    private int socketNumber;
     private String fileName;
 
-    RunnableSocketReader(Socket soc, String name){
+    RunnableSocketReader(int sNumber, String name){
         // Initialize with socket and fileName
-        socket = soc;
+        socketNumber = sNumber;
         fileName = name;
     }
 
     @Override 
     public void run() {
-        File file=new File("/fileName");
+        File file=new File(fileName);
         if (file.exists()){
-            System.out.println("Client: Warning! " + fileName + " will be overwritten!");
+            System.out.println("Reader: Warning! " + fileName + " will be overwritten!");
         }
 
         try{ 
+            // create socket
+            System.out.println("Reader: Connecting to socket " + socketNumber + " to get file " + fileName);
+			Socket socket = new Socket("localhost", socketNumber);
+			DataInputStream socket_reader = new DataInputStream(socket.getInputStream());
+
+            // create file
             FileOutputStream fout= new FileOutputStream(fileName);
-			DataInputStream socket_reader = new DataInputStream(
-					socket.getInputStream());
+
             int total_bytes = 0;
             int len;
 			byte[] buffer = new byte[1024];
             while(true){
                 len = socket_reader.read(buffer);
                 if(len < 0){
-                    System.out.println("Client: Finished downloading " + fileName);
+                    System.out.println("Reader: Finished downloading " + fileName);
                     break;
                 }
                 total_bytes += len;
                 fout.write(buffer, 0, len);
             }
-            System.out.println("Client: Closing socket (" + total_bytes + "bytes transfered)");
+            System.out.println("Reader: Closing socket (" + total_bytes + " bytes)");
             socket.close();
             fout.close();
         }

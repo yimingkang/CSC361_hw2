@@ -1,11 +1,16 @@
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 
 public class Server {
     public static void main(String[] args) throws IOException{
         int port_num = 9876;
+        int basePort = port_num;
         int quit = 0;
+
+        List<RunnableSocketWriter> threadsList = new ArrayList<RunnableSocketWriter>();
+
         System.out.println("Starting server at port " + port_num);
         ServerSocket serversSocket = new java.net.ServerSocket(port_num);
         
@@ -21,27 +26,32 @@ public class Server {
             String fileName= socket_reader.readLine();
             if(fileName == null){
                 System.out.println("Server: Connection lost....");
-                break;
+                socket.close();
+                continue;
             }
             File file = new File(fileName);
             if (file.exists()){
-                // Send the file here
-                System.out.println("Server: File " + fileName + " exists");
-                byte[] buffer = new byte[1024];
-                FileInputStream fin= new FileInputStream(file);
-                System.out.println("Server: Begin transmitting file");
                 while(true){
-                    int len = fin.read(buffer);
-                    if (len<0){
-                        // done writing here
+                    try{
+                        basePort++;
+                        ServerSocket dataSocket = new java.net.ServerSocket(basePort);
+
+                        // notify client of the port we're sending data to
+                        System.out.println("Server: starting data port on port " + String.valueOf(basePort));
+                        writer.writeBytes(String.valueOf(basePort));
+
+                        // start writing from the socket as soon as a connection is accepted
+                        RunnableSocketWriter sock_writer = new RunnableSocketWriter(dataSocket, fileName);
+                        sock_writer.start();
+
+                        // insert into arraylist so we can wait() on it later
+                        threadsList.add(sock_writer);
                         break;
-                    }else{
-                        // write to socket
-                        System.out.println("Server: Transmitting " + len + "bytes");
-                        writer.write(buffer, 0, len);
+                    }
+                    catch (Exception e) {
+                        System.out.println("Server: port " + basePort + " is occupied!");
                     }
                 }
-                System.out.println("Server: Done transmitting file");
             }
             else{
                 System.out.println("Server: File " + fileName + " not found");
