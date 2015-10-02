@@ -26,7 +26,7 @@ class RunnableSocketReader implements Runnable {
 			DataInputStream socket_reader = new DataInputStream(socket.getInputStream());
 
             // create file
-            FileOutputStream fout= new FileOutputStream(fileName);
+            FileOutputStream fout = null;
 
             int total_bytes = 0;
             int len;
@@ -35,8 +35,16 @@ class RunnableSocketReader implements Runnable {
             while(true){
                 len = socket_reader.read(buffer);
                 if(len < 0){
-                    System.out.println("Reader: Finished downloading " + fileName);
+                    if(fout == null){
+                        System.out.println("Reader: Counld not download file " + fileName);
+                    }else{
+                        System.out.println("Reader: Finished downloading " + fileName);
+                    }
                     break;
+                }
+                System.out.println("Reader: read " + len + " bytes");
+                if( fout == null){
+                    fout  = new FileOutputStream(fileName);
                 }
                 total_bytes += len;
                 fout.write(buffer, 0, len);

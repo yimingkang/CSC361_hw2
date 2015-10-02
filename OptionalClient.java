@@ -8,11 +8,10 @@ public class OptionalClient{
 		// TODO Auto-generated method stub
 		System.out.println("Hello World");
         String str;
-        Pattern responseRegex = Pattern.compile("(\\d{3}) (.+)");
         Pattern inputRegex = Pattern.compile("(USER|SYST|EPSV|RETR|STOR|LIST|PASS)( (.*))?");
         Pattern portRegex = Pattern.compile("\\|(\\d+)\\|");
 
-        Socket socket = new Socket("localhost",9876);
+        Socket socket = new Socket("loki.cciw.ca", 21);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         BufferedReader socket_reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -34,7 +33,6 @@ public class OptionalClient{
                 if(umatch.find()){
                     String cmd = umatch.group(1);
                     String arg = umatch.group(3);
-                    System.out.println("Client: cmd was " + cmd +  " Arg was: " + arg);
 
                     if(cmd.compareTo("USER") == 0){
                         writer.writeBytes(str + "\r\n");
@@ -68,8 +66,39 @@ public class OptionalClient{
                         }
                     }
 
+                    if(cmd.compareTo("STOR") == 0){
+                        if (!passiveMode || port == -1){
+                            System.out.println("Client: Not in passive mode / port not set!");
+                            continue;
+                        }
+
+                        File file = new File(arg);
+                        if (!file.exists()){
+                            System.out.println("Client: File not found: " + arg);
+                            port = -1;
+                            passiveMode = false;
+                            continue;
+                        }
+                        System.out.println("Client: About to store file: " + str);
+
+                        // start connection
+                        RunnableFileWriter fileWriter = new RunnableFileWriter(port, arg);
+                        fileWriter.start();
+                        writer.writeBytes(str + "\r\n");
+
+                        response = checkResponse(socket_reader, 150);
+                        if(response.isEmpty()){
+                            System.out.println("Client: Server response is not expected");
+                            port = -1;
+                            passiveMode = false;
+                            continue;
+                        }
+                        response = checkResponse(socket_reader, 226);
+                        port = -1;
+                        passiveMode = false;
+                    }
+
                     if(cmd.compareTo("RETR") == 0){
-                        System.out.println("Client: In RETR handler"); 
                         if (!passiveMode || port == -1){
                             System.out.println("Client: Not in passive mode / port not set!");
                             continue;
@@ -86,12 +115,52 @@ public class OptionalClient{
                             }else{
                                 System.out.println("Client: Could not downlaod file!");
                             }
+                            port = -1;
+                            passiveMode = false;
                             continue;
                         }else{
                             // start reading from the socket as soon as a connection is accepted
                             System.out.println("Client: Downloading files...");
                         }
                         response = checkResponse(socket_reader, 226);
+                        port = -1;
+                        passiveMode = false;
+                    }
+
+                    if(cmd.compareTo("LIST") == 0){
+                        if (!passiveMode || port == -1){
+                            System.out.println("Client: Not in passive mode / port not set!");
+                            continue;
+                        }
+                        writer.writeBytes(str + "\r\n");
+
+                        Socket dataSoc= new Socket("localhost", port);
+                        BufferedReader dataSocReader = new BufferedReader(new InputStreamReader(dataSoc.getInputStream()));
+
+                        response = checkResponse(socket_reader, 150);
+                        if(response.isEmpty()){
+                            System.out.println("Client: Unexpected server response");
+                            port = -1;
+                            passiveMode = false;
+                            continue;
+                        }
+
+                        String buf = dataSocReader.readLine();
+
+                        System.out.println("LIST on " + arg + ":");
+                        while(buf != null){
+                            System.out.println(buf);
+                            buf = dataSocReader.readLine();
+                        }
+                        dataSoc.close();
+                        port = -1;
+                        passiveMode = false;
+                        response = checkResponse(socket_reader, 226);
+                        System.out.println("Client: Done listing");
+                    }
+
+                    if(cmd.compareTo("PASS") == 0){
+                        writer.writeBytes(str + "\r\n");
                     }
 
                 }else{
@@ -99,22 +168,13 @@ public class OptionalClient{
                 }
             }
 
-            //int socketNumber = Integer.parseInt(response);
-            //System.out.println("Client: Server opened port " + socketNumber);
-
-            // start reading from the socket as soon as a connection is accepted
-            //RunnableSocketReader sock_reader = new RunnableSocketReader(socketNumber, str);
-            //sock_reader.start();
-
-            // add to readerTheads to wait() later
-            //readerThreads.add(sock_reader);
-            //socket.close();
 		}
 	}
 
     static String checkResponse(BufferedReader sockReader, int expected) throws Exception{
-        Pattern responseRegex = Pattern.compile("(\\d{3}) (.+)");
+        Pattern responseRegex = Pattern.compile("(\\d{3})(.+)");
         String response = sockReader.readLine();
+        System.out.println("Client: Debug: " + response);
         Matcher match = responseRegex.matcher(response);
         if (match.find()){
             int found = Integer.parseInt(match.group(1));
