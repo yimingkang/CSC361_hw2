@@ -29,7 +29,7 @@ public class Client{
             System.out.println("Client: Server opened port " + socketNumber);
 
             // start reading from the socket as soon as a connection is accepted
-            RunnableSocketReader sock_reader = new RunnableSocketReader(socketNumber, str);
+            RunnableSocketReader sock_reader = new RunnableSocketReader(socketNumber, str, "localhost"); 
             sock_reader.start();
 
             // add to readerTheads to wait() later

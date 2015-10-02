@@ -5,11 +5,13 @@ class RunnableSocketReader implements Runnable {
     private Thread thisThread;
     private int socketNumber;
     private String fileName;
+    private String hostname;
 
-    RunnableSocketReader(int sNumber, String name){
+    RunnableSocketReader(int sNumber, String name, String host){
         // Initialize with socket and fileName
         socketNumber = sNumber;
         fileName = name;
+        hostname = host;
     }
 
     @Override 
@@ -22,7 +24,7 @@ class RunnableSocketReader implements Runnable {
         try{ 
             // create socket
             System.out.println("Reader: Connecting to socket " + socketNumber + " to get file " + fileName);
-			Socket socket = new Socket("localhost", socketNumber);
+			Socket socket = new Socket(hostname, socketNumber);
 			DataInputStream socket_reader = new DataInputStream(socket.getInputStream());
 
             // create file

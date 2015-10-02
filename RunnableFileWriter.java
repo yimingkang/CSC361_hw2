@@ -5,11 +5,13 @@ class RunnableFileWriter implements Runnable {
     private Thread thisThread;
     private int socketNumber;
     private String fileName;
+    private String hostname;
 
-    RunnableFileWriter(int sNumber, String name){
+    RunnableFileWriter(int sNumber, String name, String host){
         // Initialize with socket and fileName
         fileName = name;
         socketNumber = sNumber;
+        hostname = host;
     }
 
     @Override 
@@ -17,7 +19,7 @@ class RunnableFileWriter implements Runnable {
         File file=new File(fileName);
 
         try{ 
-			Socket socket = new Socket("localhost", socketNumber);
+			Socket socket = new Socket(hostname, socketNumber);
 
             DataOutputStream writer = new DataOutputStream(socket.getOutputStream()); 
             System.out.println("Writer: Established connection for file " + fileName);

@@ -11,7 +11,8 @@ public class OptionalClient{
         Pattern inputRegex = Pattern.compile("(USER|SYST|EPSV|RETR|STOR|LIST|PASS)( (.*))?");
         Pattern portRegex = Pattern.compile("\\|(\\d+)\\|");
 
-        Socket socket = new Socket("loki.cciw.ca", 21);
+        String host = "loki.cciw.ca";
+        Socket socket = new Socket(host, 21);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         BufferedReader socket_reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -61,7 +62,6 @@ public class OptionalClient{
                             passiveMode = true;
                             System.out.println("Client: Entering passive mode, port=" + port);
                         }else{
-                            System.out.println("Client: Server returned an invalid msg: " + response);
                             continue;
                         }
                     }
@@ -82,13 +82,12 @@ public class OptionalClient{
                         System.out.println("Client: About to store file: " + str);
 
                         // start connection
-                        RunnableFileWriter fileWriter = new RunnableFileWriter(port, arg);
+                        RunnableFileWriter fileWriter = new RunnableFileWriter(port, arg, host);
                         fileWriter.start();
                         writer.writeBytes(str + "\r\n");
 
                         response = checkResponse(socket_reader, 150);
                         if(response.isEmpty()){
-                            System.out.println("Client: Server response is not expected");
                             port = -1;
                             passiveMode = false;
                             continue;
@@ -104,7 +103,7 @@ public class OptionalClient{
                             continue;
                         }
                         writer.writeBytes(str + "\r\n");
-                        RunnableSocketReader sock_reader = new RunnableSocketReader(port, arg);
+                        RunnableSocketReader sock_reader = new RunnableSocketReader(port, arg, host);
                         sock_reader.start();
 
                         response = checkResponse(socket_reader, 150);
@@ -161,6 +160,7 @@ public class OptionalClient{
 
                     if(cmd.compareTo("PASS") == 0){
                         writer.writeBytes(str + "\r\n");
+                        response = checkResponse(socket_reader, 226);
                     }
 
                 }else{
@@ -172,21 +172,24 @@ public class OptionalClient{
 	}
 
     static String checkResponse(BufferedReader sockReader, int expected) throws Exception{
-        Pattern responseRegex = Pattern.compile("(\\d{3})(.+)");
-        String response = sockReader.readLine();
-        System.out.println("Client: Debug: " + response);
-        Matcher match = responseRegex.matcher(response);
-        if (match.find()){
+        Pattern responseRegex = Pattern.compile("(\\d{3}) (.+)");
+        while (true){
+            String response = sockReader.readLine();
+            Matcher match = responseRegex.matcher(response);
+            if(!match.find()){
+                System.out.println(response);
+                continue;
+            }
+            System.out.println(response);
             int found = Integer.parseInt(match.group(1));
             if(found == expected){
+                System.out.println("******DONE********");
                 return match.group(2);
             }else{
                 System.out.println("Client: Server responded with: " + found + " expected: " + expected);
+                System.out.println("******DONE********");
                 return "";
             }
-        }else{
-            System.out.println("Client: Server failed to return a valid message: " + response);
-            return "";
         }
     }
 }
