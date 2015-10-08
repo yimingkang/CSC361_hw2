@@ -75,8 +75,6 @@ public class OptionalClient{
                         File file = new File(arg);
                         if (!file.exists()){
                             System.out.println("Client: File not found: " + arg);
-                            port = -1;
-                            passiveMode = false;
                             continue;
                         }
                         System.out.println("Client: About to store file: " + str);

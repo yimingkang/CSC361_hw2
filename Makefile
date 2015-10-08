@@ -1,11 +1,11 @@
 CC=javac
-SRV=Server.java
-CLI=Client.java
+CLI=OptionalClient.java
+LIB=RunnableFileWriter.java RunnableSocketReader.java RunnableSocketWriter.java
 
-all: srv cli
+all: lib cli
 
-srv:
-	$(CC) $(SRV)
+lib:
+	$(CC) $(LIB)
 cli:
 	$(CC) $(CLI)
 

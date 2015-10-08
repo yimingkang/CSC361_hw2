@@ -42,7 +42,6 @@ class RunnableSocketReader implements Runnable {
                     }
                     break;
                 }
-                System.out.println("Reader: read " + len + " bytes");
                 if( fout == null){
                     fout  = new FileOutputStream(fileName);
                 }
