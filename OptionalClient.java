@@ -11,7 +11,7 @@ public class OptionalClient{
         Pattern inputRegex = Pattern.compile("(USER|SYST|EPSV|RETR|STOR|LIST|PASS)( (.*))?");
         Pattern portRegex = Pattern.compile("\\|(\\d+)\\|");
 
-        Socket socket = new Socket("loki.cciw.ca", 21);
+        Socket socket = new Socket("localhost", 9876);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         BufferedReader socket_reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -174,7 +174,6 @@ public class OptionalClient{
     static String checkResponse(BufferedReader sockReader, int expected) throws Exception{
         Pattern responseRegex = Pattern.compile("(\\d{3})(.+)");
         String response = sockReader.readLine();
-        System.out.println("Client: Debug: " + response);
         Matcher match = responseRegex.matcher(response);
         if (match.find()){
             int found = Integer.parseInt(match.group(1));
